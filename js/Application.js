@@ -32,7 +32,6 @@ export default class App {
       }
     );
 
-    // this.init();
   }
 
   async init() {
@@ -42,7 +41,6 @@ export default class App {
     this.initThree();
     this.createMap();
     if (this.version == 1) this.initStartButton();
-    // this.start();
   }
 
   initStartButton() {
@@ -79,10 +77,10 @@ export default class App {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(this.renderer.domElement);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.camera.position.z = 110;
-    this.camera.goal = this.position;
-    this.camera.position.y = 40;
-    this.camera.position.x = 20;
+    // this.camera.position.z = 110;
+    // this.camera.goal = this.position;
+    // this.camera.position.y = 40;
+    // this.camera.position.x = 20;
     this.camera.rotation.x = -Math.PI / 2;
     // this.camera.lookAt(0, 0, 0);
 
@@ -141,7 +139,7 @@ export default class App {
     let angle = 0;
     let group = new THREE.Group();
     this.scene.add(group);
-    console.log(this.scene)
+    // console.log(this.scene)
     this.allWords.forEach((word, index) => {
       if (word.property.x != prevX || word.property.z != prevZ) {
         x = word.property.x;
@@ -228,7 +226,7 @@ export default class App {
       this.mesh_array[i].material.color.setHex( 0xff44ff )
     }
       if(word.person == this.version){
-        this.mesh_array[this.counter].material.color.setHex( 0xffffff )
+        this.mesh_array[this.counter].material.color.setHex( 0xFF4500 )
       }
     this.counter++;
   }
@@ -331,7 +329,7 @@ export default class App {
           0.05
         );
         this.camera.position.x = this.posX
-        this.camera.position.y = this.posY + 10
+        this.camera.position.y = this.posY + 50
         this.camera.position.z = this.posZ
     // console.log(this.mesh_array[this.counter].parent)
       // if(this.mesh_array[this.counter].geometry.boundingSphere.center.x){

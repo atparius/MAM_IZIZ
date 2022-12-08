@@ -29849,7 +29849,6 @@ class App {
             this.font = font;
             this.init();
         });
-    // this.init();
     }
     async init() {
         this.data = await this.loadJSON("./JSON/RoyalWithCheese.json");
@@ -29858,7 +29857,6 @@ class App {
         this.initThree();
         this.createMap();
         if (this.version == 1) this.initStartButton();
-    // this.start();
     }
     initStartButton() {
         const button = document.createElement("button");
@@ -29888,10 +29886,10 @@ class App {
         this.renderer.shadowMap.type = _three.PCFSoftShadowMap;
         document.body.appendChild(this.renderer.domElement);
         this.controls = new (0, _orbitControls.OrbitControls)(this.camera, this.renderer.domElement);
-        this.camera.position.z = 110;
-        this.camera.goal = this.position;
-        this.camera.position.y = 40;
-        this.camera.position.x = 20;
+        // this.camera.position.z = 110;
+        // this.camera.goal = this.position;
+        // this.camera.position.y = 40;
+        // this.camera.position.x = 20;
         this.camera.rotation.x = -Math.PI / 2;
         // this.camera.lookAt(0, 0, 0);
         // this.scene.fog = new THREE.Fog(0x000000, 0.005, 50);
@@ -29934,7 +29932,7 @@ class App {
         let angle = 0;
         let group = new _three.Group();
         this.scene.add(group);
-        console.log(this.scene);
+        // console.log(this.scene)
         this.allWords.forEach((word, index)=>{
             if (word.property.x != prevX || word.property.z != prevZ) {
                 x = word.property.x;
@@ -30004,7 +30002,7 @@ class App {
     }
     counterShift(previousTime, word) {
         for(var i = this.mesh_array.length - 1; i >= 0; i--)this.mesh_array[i].material.color.setHex(0xff44ff);
-        if (word.person == this.version) this.mesh_array[this.counter].material.color.setHex(0xffffff);
+        if (word.person == this.version) this.mesh_array[this.counter].material.color.setHex(0xFF4500);
         this.counter++;
     }
     // createText(text, previousTime, property) {
@@ -30084,7 +30082,7 @@ class App {
             this.posY = this.lerp(this.posY, camy, 0.05);
             this.posZ = this.lerp(this.posZ, camz, 0.05);
             this.camera.position.x = this.posX;
-            this.camera.position.y = this.posY + 10;
+            this.camera.position.y = this.posY + 50;
             this.camera.position.z = this.posZ;
         // console.log(this.mesh_array[this.counter].parent)
         // if(this.mesh_array[this.counter].geometry.boundingSphere.center.x){
@@ -32294,8 +32292,8 @@ parcelHelpers.export(exports, "validateCallback", ()=>validateCallback);
 parcelHelpers.export(exports, "validateContextObject", ()=>validateContextObject);
 parcelHelpers.export(exports, "validateIndexedDBOpenable", ()=>validateIndexedDBOpenable);
 parcelHelpers.export(exports, "validateNamespace", ()=>validateNamespace);
-var global = arguments[3];
 var process = require("process");
+var global = arguments[3];
 const CONSTANTS = {
     /**
      * @define {boolean} Whether this is the client Node.js SDK.
