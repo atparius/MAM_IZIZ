@@ -1,0 +1,21 @@
+{
+  "name": "module_demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx parcel index.html --port 80"
+  },
+  "author": "gael",
+  "license": "ISC",
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "firebase": "^9.14.0",
+    "parcel": "^2.8.0",
+    "parcel-reporter-static-files-copy": "^1.4.0",
+    "three": "^0.147.0"
+  },
+  "devDependencies": {
+    "process": "^0.11.10"
+  }
+}
