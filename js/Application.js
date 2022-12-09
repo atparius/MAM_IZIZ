@@ -1,3 +1,7 @@
+// Marius + Isaïa 
+// Pulp Fiction 
+
+
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 //import font loader
@@ -18,25 +22,23 @@ export default class App {
     this.posZ = 0;
     this.person = 0;
     this.pperson = 0;
-    this.mesh_array = []
+    this.counter_cam = 0;
+    this.mesh_array = [];
     this.position = new THREE.Vector3();
     const urlParams = new URLSearchParams(window.location.search);
     this.version = urlParams.get("version");
+    this.PlaneColor = 0xcccccc;
 
     const loader = new FontLoader();
-    loader.load(
-      "./font/false_Book.json",
-      (font) => {
-        this.font = font;
-        this.init();
-      }
-    );
-
+    loader.load("./font/false_Book.json", (font) => {
+      this.font = font;
+      this.init();
+    });
   }
 
   async init() {
     this.data = await this.loadJSON("./JSON/RoyalWithCheese.json");
-    this.audio = await this.loadAudio("./audio/RoyalWithCheese.mp3");
+    this.audio = await this.loadAudio("./audio/RoyalWithCheese.wav");
     this.prepare("RoyalWithCheese", this.data);
     this.initThree();
     this.createMap();
@@ -45,6 +47,7 @@ export default class App {
 
   initStartButton() {
     const button = document.createElement("button");
+    button.classList.add("buttonstyle");
     button.innerHTML = "Start";
     button.style.position = "absolute";
     //center the button in screen
@@ -59,12 +62,17 @@ export default class App {
     document.body.appendChild(button);
   }
 
+  degrees_to_radians(degrees) {
+    var pi = Math.PI;
+    return degrees * (pi / 100);
+  }
+
   initThree() {
     this.angle = 0;
     this.counter = 0;
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(
-      75,
+      45,
       window.innerWidth / window.innerHeight,
       0.1,
       1000
@@ -77,32 +85,47 @@ export default class App {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(this.renderer.domElement);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    // this.camera.position.z = 110;
-    // this.camera.goal = this.position;
-    // this.camera.position.y = 40;
-    // this.camera.position.x = 20;
-    this.camera.rotation.x = -Math.PI / 2;
-    // this.camera.lookAt(0, 0, 0);
 
-    // this.scene.fog = new THREE.Fog(0x000000, 0.005, 50);
+    this.camera.rotation.x = this.degrees_to_radians(-30);
+    this.camera.rotation.z = this.degrees_to_radians(-20);
+    this.camera.rotation.y = this.degrees_to_radians(-20);
 
-    // add light
-    const light = new THREE.AmbientLight(0xffffff);
-    this.scene.add(light);
+    this.camera.position.z = 10;
+    this.camera.position.y = 20;
+    this.camera.position.x = -10;
 
-    this.directionalLight = new THREE.SpotLight(0xffffff, 1, 0, Math.PI / 4, 1);
+    // this.camera.rotation.x = -Math.PI / 2;
+
+    // ----------------------------------- add light -----------------------------------
+
+    const ambientlight = new THREE.AmbientLight(0xffffff, 0.7);
+    this.scene.add(ambientlight);
+
+    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1, 0, Math.PI / 4, 1);
+    this.directionalLight.position.set(50, 50, 100);
     this.directionalLight.castShadow = true;
-    this.directionalLight.position.set(0, 10, 8);
-    // this.scene.add(this.directionalLight);
+
+    this.directionalLight.shadow.camera.left = -300;
+    this.directionalLight.shadow.camera.right = 300;
+    this.directionalLight.shadow.camera.top = 300;
+    this.directionalLight.shadow.camera.bottom = -300;
+
+    this.directionalLight.shadow.mapSize.width = 2000;
+    this.directionalLight.shadow.mapSize.height = 2000;
+
+    this.directionalLight.right = 100;
+    this.scene.add(this.directionalLight);
+
+    // ----------------------------------- end light -----------------------------------
 
     //add "endless" grey plane as ground
     const planeGeometry = new THREE.PlaneGeometry(1200, 1200);
-    let planeColor = 0xcccccc;
-    if(this.version==1){
-      planeColor = 0xccccff;
-    }
+
+    planeGeometry.receiveShadow = true;
+    planeGeometry.castShadow = true;
+    this.planeColor = 0x3f3f3f;
     const planeMaterial = new THREE.MeshStandardMaterial({
-      color: planeColor,
+      color: this.planeColor,
     });
 
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -110,23 +133,17 @@ export default class App {
     plane.rotateX(-Math.PI / 2);
     //set plane double sided
     plane.material.side = THREE.DoubleSide;
-
+    plane.receiveShadow = true;
     this.scene.add(plane);
 
     this.firebase = new Firebase();
     setTimeout(() => {
       this.firebase.addEventListener(
-        "TYPE_CITY/time",
+        "TYPE_CITY2/time",
         this.onSyncTime.bind(this)
       );
-
-      // this.firebase.addEventListener("ECAL/MID", (data) => {
-      //   console.log(data);
-      // });
-
-      // }
     }, 1000);
-    this.firebase.send("TYPE_CITY/time", -1);
+    this.firebase.send("TYPE_CITY2/time", -1);
 
     this.animate();
   }
@@ -136,10 +153,9 @@ export default class App {
     let z = 0;
     let prevX = 0;
     let prevZ = 0;
-    let angle = 0;
+
     let group = new THREE.Group();
     this.scene.add(group);
-    // console.log(this.scene)
     this.allWords.forEach((word, index) => {
       if (word.property.x != prevX || word.property.z != prevZ) {
         x = word.property.x;
@@ -177,17 +193,16 @@ export default class App {
     this.allWords = [];
     let property = null;
     data[name].forEach((element) => {
-
       element["timing"].forEach((word) => {
         if (word["property"]) {
           property = word["property"];
         }
-        if(word['person'] === undefined){
-        }else{
-          this.pperson = word['person'] 
+        if (word["person"] === undefined) {
+        } else {
+          this.pperson = word["person"];
         }
         this.allWords.push({
-          person : this.pperson,
+          person: this.pperson,
           text: word["word"],
           start: word["start_time"],
           end: word["start_end"],
@@ -195,102 +210,59 @@ export default class App {
         });
       });
     });
-    console.log(this.allWords)
   }
 
   start() {
     this.audio.play();
     // this.shiftWords(0);
-    this.person = this.allWords[0].person
-    this.pperson = this.allWords[0].person
-    this.firebase.send("TYPE_CITY/time", 0);
+    this.person = this.allWords[0].person;
+    this.pperson = this.allWords[0].person;
+    this.firebase.send("TYPE_CITY2/time", 0);
   }
 
   shiftWords(previousTime = 0) {
     const word = this.allWords.shift();
-    // console.log("shift words", word);
     if (word) {
-      console.log(word)
       setTimeout(() => {
-        // console.log("send");
-        this.firebase.send("TYPE_CITY/time", word.start);
-
-        this.counterShift(word.start,word);
-        // console.log(previousTime + " Counter: " + this.counter);
+        if(this.version == 1){
+        this.firebase.send("TYPE_CITY2/time", word.start);
+        }
+        this.counterShift(word.start, word);
       }, (word.start - previousTime) * 1000);
     }
   }
 
-  counterShift(previousTime,word){
-    for (var i = this.mesh_array.length - 1; i >= 0; i--) {
-      this.mesh_array[i].material.color.setHex( 0xff44ff )
+  counterShift(previousTime, word) {
+    for (var i = this.mesh_array.length-1; i >= 0; i--) {
+      this.mesh_array[i].material.color.setHex(0xadadad);
     }
-      if(word.person == this.version){
-        this.mesh_array[this.counter].material.color.setHex( 0xFF4500 )
-      }
+    if (word.person == this.version && this.version == 1) {
+      this.mesh_array[this.counter].material.color.setHex(0xFF4343);
+    } else if (word.person == this.version && this.version == 2) {
+      this.mesh_array[this.counter].material.color.setHex(0x6690FF);
+    }
+    this.person = word.person;
+    this.counter_cam++;
     this.counter++;
   }
 
-  // createText(text, previousTime, property) {
-  //   //counter to randomize disposition
-  //   this.shiftWords(previousTime);
-  //   // if (this.version == 1) this.firebase.send("TYPE_CITY/time", previousTime);
-  //   // add text on scene
-  //   const loader = new FontLoader();
-  //   loader.load(
-  //     "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json",
-  //     (font) => {
-  //       const geometry = new TextGeometry(text, {
-  //         font: font,
-  //         size: property ? property["height"] : 1,
-  //         height: 0.1,
-  //         curveSegments: 12,
-  //         bevelEnabled: true,
-  //         bevelThickness: 0.8,
-  //         bevelSize: 0.001,
-  //         bevelOffset: 0,
-  //         bevelSegments: 1,
-  //       });
-  //       const material = new THREE.MeshPhongMaterial({
-  //         color: property ? parseInt(property["color"], 16) : 0xffffff,
-  //         flatShading: false,
-  //       });
-  //       this.text = new THREE.Mesh(geometry, material);
-  //       this.text.geometry.computeBoundingBox();
-  //       if (this.counter % 3 == 0) this.text.rotateZ(Math.PI / 2);
-  //       this.position += 3;
-  //       this.camera.goal = this.position + 5;
-  //       this.text.castShadow = true;
-  //       this.text.receiveShadow = true;
-  //       this.text.position.z = this.position;
-  //       this.text.position.x = this.position % 2 == 0 ? -1 : 1;
-  //       this.text.position.y = 0;
-
-  //       this.scene.add(this.text);
-  //     } //end of load callback
-  //   );
-  // }
-
   createTextForMap(text, x, z, group) {
-
     const geometry = new TextGeometry(text, {
       font: this.font,
       size: 1,
-      height: 0.1,
+      height: 0.5,
       curveSegments: 12,
       bevelEnabled: true,
-      bevelThickness: 0.1,
-      bevelSize: 0.001,
+      bevelThickness: 0.01,
+      bevelSize: 0.03,
       bevelOffset: 0,
-      bevelSegments: 1,
+      bevelSegments: 4,
     });
 
     const material = new THREE.MeshPhongMaterial({
-      color: 0xff44ff,
+      color: 0xadadad,
       flatShading: false,
     });
-
-
 
     this.text = new THREE.Mesh(geometry, material);
     this.text.geometry.computeBoundingBox();
@@ -301,7 +273,7 @@ export default class App {
     this.text.position.x = newX;
     this.text.position.z = z;
     this.text.rotation.x = -Math.PI / 2;
-    this.mesh_array.push(this.text)
+    this.mesh_array.push(this.text);
 
     group.add(this.text);
     this.scene.updateMatrixWorld(true);
@@ -309,66 +281,72 @@ export default class App {
   }
 
   animate() {
-    if(this.mesh_array[this.counter]){
-        const camx = this.mesh_array[this.counter].getWorldPosition(this.position).x
-        const camy = this.mesh_array[this.counter].getWorldPosition(this.position).y
-        const camz = this.mesh_array[this.counter].getWorldPosition(this.position).z
-        this.posX = this.lerp(
-          this.posX,
-          camx,
-          0.05
-        );
-        this.posY = this.lerp(
-          this.posY,
-          camy,
-          0.05
-        );
-        this.posZ = this.lerp(
-          this.posZ,
-          camz,
-          0.05
-        );
-        this.camera.position.x = this.posX
-        this.camera.position.y = this.posY + 50
-        this.camera.position.z = this.posZ
-    // console.log(this.mesh_array[this.counter].parent)
-      // if(this.mesh_array[this.counter].geometry.boundingSphere.center.x){
-      // }
+    if (this.allWords.length !== 0) {
+      if (this.mesh_array[this.counter_cam]) {
+        var camx = 0;
+        var camy = 0;
+        var camz = 0;
 
-        // const camx = (this.mesh_array[this.counter].geometry.boundingBox.min.x+ this.mesh_array[this.counter].geometry.boundingBox.max.x)/2
-        // const camy = (this.mesh_array[this.counter].geometry.boundingBox.min.y+ this.mesh_array[this.counter].geometry.boundingBox.max.y)/2
-        // const camz = (this.mesh_array[this.counter].geometry.boundingBox.min.z+ this.mesh_array[this.counter].geometry.boundingBox.max.z)/2
+        if (this.version == this.person && this.allWords[0].text != "Mayonnaise") {
+          camx =
+            this.mesh_array[this.counter_cam].getWorldPosition(this.position)
+              .x - 7;
+          camy =
+            this.mesh_array[this.counter_cam].getWorldPosition(this.position)
+              .y + 7;
+          camz =
+            this.mesh_array[this.counter_cam].getWorldPosition(this.position)
+              .z + 5;
+        } 
+        if (this.version != this.person && this.allWords[0].text != "Goddamn!" )  {
+          camx = this.mesh_array[this.counter_cam].getWorldPosition(
+            this.position
+          ).x -30;
+          camy =
+            this.mesh_array[this.counter_cam].getWorldPosition(this.position)
+              .y + 40;
+          camz = this.mesh_array[this.counter_cam].getWorldPosition(
+            this.position
+          ).z +50;
+        }
+        if (this.version == this.person && this.allWords[0].text == "Mayonnaise") {
+          console.log("mayo !!!!!!!!!!!");
+          camx =
+            this.mesh_array[this.counter_cam].getWorldPosition(this.position)
+              .x - 7;
+          camy =
+            this.mesh_array[this.counter_cam].getWorldPosition(this.position)
+              .y + 7;
+          camz =
+            this.mesh_array[this.counter_cam].getWorldPosition(this.position)
+              .z + 5;
+        }
+        
+        if(this.allWords[0].text == "Goddamn!" && this.version == 2){
+          camx = 20 - 10;
+          camy = 7;
+          camz = 126.3 + 10;
+        }
+        if(this.allWords[0].text == "Goddamn!" && this.version == 1){
+          camx = 4.5 - 7;
+          camy = 7;
+          camz = 134 + 12;
+        }
 
+       
 
+        this.posX = this.lerp(this.posX, camx, 0.05);
+        this.posY = this.lerp(this.posY, camy, 0.05);
+        this.posZ = this.lerp(this.posZ, camz, 0.05);
+
+        this.camera.position.x = this.posX;
+        this.camera.position.y = this.posY;
+        this.camera.position.z = this.posZ;
+
+        
+        
       }
-
-    const pos = [
-      [300, 50, 100 - 50],
-      [-100, 100, -100 - 50],
-      [-200, 50, 100 - 50],
-    ];
-    const lookAt = [
-      [300, 50, 100],
-      [-100, 100, -100],
-      [-200, 50, 100],
-    ];
-
-    this.lookAtX = this.lerp(
-      this.lookAtX,
-      lookAt[this.counter % 3][0],
-      0.05
-    );
-    this.lookAtY = this.lerp(
-      this.lookAtY,
-      lookAt[this.counter % 3][1],
-      0.05
-    );
-    this.lookAtZ = this.lerp(
-      this.lookAtZ,
-      lookAt[this.counter % 3][2],
-      0.05
-    );
-
+    }
     requestAnimationFrame(this.animate.bind(this));
     this.renderer.render(this.scene, this.camera);
   }
